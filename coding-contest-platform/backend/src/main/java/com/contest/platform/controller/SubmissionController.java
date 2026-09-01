@@ -70,7 +70,6 @@ public class SubmissionController {
         judgeReq.put("memoryLimitMb", 256);
 
         try {
-            ResponseEntity<Map> resp = restTemplate.postForEntity(judgeWorkerUrl + "/run", judgeReq, Map.class);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("ngrok-skip-browser-warning", "true");
