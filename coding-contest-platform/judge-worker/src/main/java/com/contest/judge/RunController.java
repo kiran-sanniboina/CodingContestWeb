@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping
 public class RunController {
 
     private static final Logger log = LoggerFactory.getLogger(RunController.class);
@@ -24,7 +23,7 @@ public class RunController {
     @Autowired
     private ExecutionService executionService;
 
-    @PostMapping("/run")
+    @PostMapping({"/run", "/api/run", "/run/"})
     public ResponseEntity<?> runSample(@RequestBody RunRequest request) {
         log.info("Received dry-run sample request for problem {}", request.getProblemId());
         Path tempDir = null;

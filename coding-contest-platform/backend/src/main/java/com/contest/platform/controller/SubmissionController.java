@@ -77,7 +77,9 @@ public class SubmissionController {
             headers.set("User-Agent", "ContestPlatformBackend");
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(judgeReq, headers);
 
-            ResponseEntity<Map> resp = restTemplate.postForEntity(judgeWorkerUrl + "/run", entity, Map.class);
+            String targetUrl = judgeWorkerUrl.replaceAll("/+$", "") + "/run";
+            log.info("Sending dry-run request to judge URL: {}", targetUrl);
+            ResponseEntity<Map> resp = restTemplate.postForEntity(targetUrl, entity, Map.class);
             return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (Exception e) {
             log.error("Failed to proxy run request to judge worker", e);
