@@ -7,6 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -67,7 +70,14 @@ public class SubmissionController {
         judgeReq.put("memoryLimitMb", 256);
 
         try {
-            ResponseEntity<Map> resp = restTemplate.postForEntity(judgeWorkerUrl + "/run", judgeReq, Map.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("ngrok-skip-browser-warning", "true");
+            headers.set("Bypass-Tunnel-Reminder", "true");
+            headers.set("User-Agent", "ContestPlatformBackend");
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(judgeReq, headers);
+
+            ResponseEntity<Map> resp = restTemplate.postForEntity(judgeWorkerUrl + "/run", entity, Map.class);
             return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (Exception e) {
             log.error("Failed to proxy run request to judge worker", e);
