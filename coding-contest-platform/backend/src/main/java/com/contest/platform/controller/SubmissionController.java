@@ -69,7 +69,6 @@ public class SubmissionController {
         judgeReq.put("timeLimitMs", 3000);
         judgeReq.put("memoryLimitMb", 256);
 
-        // 1. Direct HTTP to judge worker candidates
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -78,71 +77,19 @@ public class SubmissionController {
             headers.set("User-Agent", "ContestPlatformBackend");
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(judgeReq, headers);
 
-            List<String> candidateUrls = Arrays.asList(
-                    judgeWorkerUrl.replaceAll("/+$", "") + "/run",
-                    "http://judge-worker:8081/run",
-                    "http://contest_judge_worker:8081/run",
-                    "http://localhost:8081/run"
-            );
-
-            for (String targetUrl : candidateUrls) {
-                try {
-                    log.info("Attempting dry-run via judge URL: {}", targetUrl);
-                    ResponseEntity<Map> resp = restTemplate.postForEntity(targetUrl, entity, Map.class);
-                    if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-                        return ResponseEntity.ok(resp.getBody());
-                    }
-                } catch (Exception ex) {
-                    log.debug("Target judge URL {} failed: {}", targetUrl, ex.getMessage());
-                }
-            }
+            String targetUrl = judgeWorkerUrl.replaceAll("/+$", "") + "/run";
+            log.info("Sending dry-run request to judge URL: {}", targetUrl);
+            ResponseEntity<Map> resp = restTemplate.postForEntity(targetUrl, entity, Map.class);
+            return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (Exception e) {
-            log.warn("Direct HTTP to judge worker failed: {}", e.getMessage());
+            log.error("Failed to proxy run request to target judge URL: {}", judgeWorkerUrl, e);
+            return ResponseEntity.ok(Map.of(
+                "verdict", "SYSTEM_ERROR",
+                "error", "Judge execution service unavailable: " + e.getMessage(),
+                "stdout", "",
+                "stderr", ""
+            ));
         }
-
-        // 2. Queue-based fallback execution via Submission queue
-        try {
-            Submission sampleSub = new Submission();
-            sampleSub.setTeamId(username != null ? username : "anonymous");
-            sampleSub.setProblemId(request.getProblemId());
-            sampleSub.setLanguage(request.getLanguage() != null ? request.getLanguage().toUpperCase() : "JAVA");
-            sampleSub.setSourceCode(request.getSourceCode());
-            sampleSub.setStatus(SubmissionStatus.QUEUED);
-            sampleSub.setSubmittedAt(Instant.now());
-
-            Submission saved = submissionRepository.save(sampleSub);
-            messagingTemplate.convertAndSend("/topic/submissions", saved);
-
-            // Wait up to 6 seconds for worker to process
-            long deadline = System.currentTimeMillis() + 6000;
-            while (System.currentTimeMillis() < deadline) {
-                Thread.sleep(400);
-                Optional<Submission> current = submissionRepository.findById(saved.getId());
-                if (current.isPresent()) {
-                    Submission s = current.get();
-                    if (s.getStatus() != SubmissionStatus.QUEUED && 
-                        s.getStatus() != SubmissionStatus.COMPILING) {
-                        
-                        Map<String, Object> resp = new HashMap<>();
-                        resp.put("verdict", s.getStatus().name());
-                        resp.put("status", s.getStatus().name());
-                        resp.put("stdout", s.getStatus() == SubmissionStatus.ACCEPTED ? (sampleOutput != null ? sampleOutput : "Sample passed") : "");
-                        resp.put("stderr", s.getFailedTest() != null ? s.getFailedTest() : "");
-                        resp.put("executionTimeMs", s.getExecutionTimeMs() != null ? s.getExecutionTimeMs() : 0);
-                        return ResponseEntity.ok(resp);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("Queue fallback execution error", e);
-        }
-
-        return ResponseEntity.ok(Map.of(
-            "verdict", "SYSTEM_ERROR",
-            "error", "Judge execution timed out or worker unavailable.",
-            "stdout", "",
-            "stderr", ""
-        ));
     }
 
     @PostMapping

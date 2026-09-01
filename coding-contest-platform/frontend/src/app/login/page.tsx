@@ -36,7 +36,12 @@ export default function LoginPage() {
           router.push("/");
         }
       } else {
-        setError("Invalid username or password. Ensure your team credentials are correct.");
+        const errJson = await res.json().catch(() => null);
+        if (res.status === 502 || res.status === 503 || res.status === 504) {
+          setError("Backend connection error (502). Check if contest_backend is running.");
+        } else {
+          setError((errJson && errJson.error) || "Invalid username or password.");
+        }
       }
     } catch (err) {
       setError("Unable to connect to contest backend. Ensure server is online.");
