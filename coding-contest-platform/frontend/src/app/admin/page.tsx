@@ -147,20 +147,6 @@ export default function AdminDashboard() {
       setTeamLoading(false);
     }
   };
-      if (res.ok) {
-        setNewTeam({ username: "", password: "", name: "", preferredLanguage: "JAVA", year: 1 });
-        fetchTeams();
-        fetchStats();
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to create team.");
-      }
-    } catch (err) {
-      alert("Network error.");
-    } finally {
-      setTeamLoading(false);
-    }
-  };
 
   const handleUpdateTeamYear = async (id: string, year: number) => {
     try {
