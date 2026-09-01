@@ -3,6 +3,7 @@ package com.contest.platform.controller;
 import com.contest.platform.model.User;
 import com.contest.platform.repository.UserRepository;
 import com.contest.platform.service.AuthService;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
