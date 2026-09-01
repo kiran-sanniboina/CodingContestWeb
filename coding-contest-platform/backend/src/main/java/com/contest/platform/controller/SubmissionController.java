@@ -82,7 +82,7 @@ public class SubmissionController {
             ResponseEntity<Map> resp = restTemplate.postForEntity(targetUrl, entity, Map.class);
             return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (Exception e) {
-            log.error("Failed to proxy run request to judge worker", e);
+            log.error("Failed to proxy run request to target judge URL: {}", judgeWorkerUrl, e);
             return ResponseEntity.ok(Map.of(
                 "verdict", "SYSTEM_ERROR",
                 "error", "Judge execution service unavailable: " + e.getMessage(),
