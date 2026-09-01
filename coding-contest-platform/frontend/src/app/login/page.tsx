@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Key, ArrowRight, ShieldCheck, Lock } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8080/api/auth/login", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), password: password.trim() }),

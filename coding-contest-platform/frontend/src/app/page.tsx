@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { API_BASE_URL } from "@/lib/api";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -135,7 +136,7 @@ export default function ContestDashboard() {
 
     try {
       // 1. Fetch Team Profile
-      const teamRes = await fetch("http://localhost:8080/api/contest/team", {
+      const teamRes = await fetch(`${API_BASE_URL}/api/contest/team`, {
         headers: { Authorization: "Bearer " + token },
       });
       if (teamRes.ok) {
@@ -144,7 +145,7 @@ export default function ContestDashboard() {
       }
 
       // 2. Fetch Problems
-      const probRes = await fetch("http://localhost:8080/api/contest/problems", {
+      const probRes = await fetch(`${API_BASE_URL}/api/contest/problems`, {
         headers: { Authorization: "Bearer " + token },
       });
       if (probRes.ok) {
@@ -153,7 +154,7 @@ export default function ContestDashboard() {
       }
 
       // 3. Fetch Timer Info & Sync Server Offset
-      const contestRes = await fetch("http://localhost:8080/api/contest/current");
+      const contestRes = await fetch(`${API_BASE_URL}/api/contest/current`);
       if (contestRes.ok) {
         const data = await contestRes.json();
         if (data.contest && data.contest.endTime) {
@@ -192,7 +193,7 @@ export default function ContestDashboard() {
     setResultMsg({ status: "RUNNING", message: "Executing inside Docker sandbox against sample input..." });
 
     try {
-      const res = await fetch("http://localhost:8080/api/submissions/run", {
+      const res = await fetch(`${API_BASE_URL}/api/submissions/run`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -242,7 +243,7 @@ export default function ContestDashboard() {
     setResultMsg({ status: "QUEUED", message: "Submission queued for Docker Judge Worker..." });
 
     try {
-      const res = await fetch("http://localhost:8080/api/submissions", {
+      const res = await fetch(`${API_BASE_URL}/api/submissions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -262,7 +263,7 @@ export default function ContestDashboard() {
         const submissionId = submission.id;
         const pollInterval = setInterval(async () => {
           try {
-            const pollRes = await fetch(`http://localhost:8080/api/submissions/${submissionId}`, {
+            const pollRes = await fetch(`${API_BASE_URL}/api/submissions/${submissionId}`, {
               headers: { Authorization: "Bearer " + token },
             });
             if (pollRes.ok) {

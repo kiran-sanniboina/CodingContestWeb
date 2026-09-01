@@ -6,6 +6,7 @@ import {
   Layers, ShieldAlert, ArrowLeft, Eye, Edit3, Award, GraduationCap, ChevronRight, X, Clock
 } from "lucide-react";
 import Link from "next/link";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"teams" | "problems" | "testcases" | "submissions">("problems");
@@ -68,7 +69,7 @@ export default function AdminDashboard() {
 
   const fetchContestTime = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/contest/current");
+      const res = await fetch(`${API_BASE_URL}/api/contest/current`);
       if (res.ok) {
         const data = await res.json();
         if (data.contest && data.contest.endTime) {
@@ -80,7 +81,7 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/admin/stats", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setStats(await res.json());
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
 
   const fetchTeams = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/admin/teams", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/teams`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setTeams(await res.json());
@@ -102,7 +103,7 @@ export default function AdminDashboard() {
 
   const fetchProblems = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/admin/problems", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/problems`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setProblems(await res.json());
@@ -113,7 +114,7 @@ export default function AdminDashboard() {
 
   const fetchSubmissions = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/admin/submissions", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/submissions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setAllSubmissions(await res.json());
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
     if (!newTeam.username || !newTeam.password) return alert("Username and password are required.");
     setTeamLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/api/admin/teams", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/teams`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(newTeam)
@@ -146,10 +147,24 @@ export default function AdminDashboard() {
       setTeamLoading(false);
     }
   };
+      if (res.ok) {
+        setNewTeam({ username: "", password: "", name: "", preferredLanguage: "JAVA", year: 1 });
+        fetchTeams();
+        fetchStats();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to create team.");
+      }
+    } catch (err) {
+      alert("Network error.");
+    } finally {
+      setTeamLoading(false);
+    }
+  };
 
   const handleUpdateTeamYear = async (id: string, year: number) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/teams/${id}/year`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/teams/${id}/year`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ year })
@@ -163,7 +178,7 @@ export default function AdminDashboard() {
   const handleDeleteTeam = async (id: string) => {
     if (!confirm(`Are you sure you want to delete team '${id}'? This will delete their submissions.`)) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/teams/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/teams/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -179,7 +194,7 @@ export default function AdminDashboard() {
   const handleResetTeamProgress = async (id: string) => {
     if (!confirm(`Reset progress for team '${id}' back to Problem 1?`)) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/teams/${id}/reset`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/teams/${id}/reset`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -192,7 +207,7 @@ export default function AdminDashboard() {
   const handleSaveProblem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:8080/api/admin/problems", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/problems`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(editingProblem)
@@ -212,7 +227,7 @@ export default function AdminDashboard() {
   const handleDeleteProblem = async (id: string) => {
     if (!confirm(`Delete problem '${id}' and all its test cases?`)) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/problems/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/problems/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -234,7 +249,7 @@ export default function AdminDashboard() {
     setActiveTab("testcases");
     setTcLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/problems/${prob.id}/testcases`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/problems/${prob.id}/testcases`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setTestCases(await res.json());
@@ -249,7 +264,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!selectedProblem) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/problems/${selectedProblem.id}/testcases`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/problems/${selectedProblem.id}/testcases`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(newTc)
@@ -266,7 +281,7 @@ export default function AdminDashboard() {
   const handleDeleteTestCase = async (tcId: string) => {
     if (!selectedProblem) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/problems/${selectedProblem.id}/testcases/${tcId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/problems/${selectedProblem.id}/testcases/${tcId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

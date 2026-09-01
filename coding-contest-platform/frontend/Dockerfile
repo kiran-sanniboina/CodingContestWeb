@@ -1,5 +1,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY package*.json ./
 RUN npm install
 COPY . .
@@ -17,5 +19,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "--max-old-space-size=256", "server.js"]
+CMD ["node", "server.js"]
 

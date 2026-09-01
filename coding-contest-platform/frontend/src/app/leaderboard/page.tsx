@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Trophy, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface TeamRank {
   rank: number;
@@ -20,7 +21,7 @@ export default function Leaderboard() {
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/leaderboard");
+      const res = await fetch(`${API_BASE_URL}/api/leaderboard`);
       if (res.ok) {
         const data = await res.json();
         setTeams(data);

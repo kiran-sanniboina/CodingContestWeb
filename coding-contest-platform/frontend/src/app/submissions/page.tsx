@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, History, RefreshCw, ChevronDown, ChevronUp, Code, Clock, CheckCircle2, XCircle, AlertOctagon, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Submission {
   id: string;
@@ -33,7 +34,7 @@ export default function Submissions() {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/api/submissions", {
+      const res = await fetch(`${API_BASE_URL}/api/submissions`, {
         headers: { Authorization: "Bearer " + token },
       });
       if (res.ok) {
