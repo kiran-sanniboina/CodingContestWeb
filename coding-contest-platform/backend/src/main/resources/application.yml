@@ -4,6 +4,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://admin:password@localhost:27017/contest?authSource=admin}
+      database: ${MONGODB_DATABASE:contest}
 
 server:
   port: 8080
