@@ -2,6 +2,8 @@ package com.contest.platform.config;
 
 import com.contest.platform.model.*;
 import com.contest.platform.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +15,8 @@ import java.util.Arrays;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     @Autowired private ContestRepository contestRepository;
     @Autowired private ProblemRepository problemRepository;
@@ -100,36 +104,43 @@ public class DataInitializer implements CommandLineRunner {
         addTc("4_2", 2, "2 1\n1 2 100", "100", false);
 
 
-        // Seed Admin
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            User admin = new User();
-            admin.setUsername("admin");
-            admin.setPasswordHash(passwordEncoder.encode("admin123"));
-            admin.setRole(Role.ADMIN);
-            admin.setCreatedAt(Instant.now());
-            userRepository.save(admin);
-        }
+        // Seed / Force Refresh Admin Account
+        User admin = userRepository.findByUsername("admin").orElseGet(() -> {
+            User u = new User();
+            u.setUsername("admin");
+            u.setCreatedAt(Instant.now());
+            return u;
+        });
+        admin.setPasswordHash(passwordEncoder.encode("admin123"));
+        admin.setRole(Role.ADMIN);
+        userRepository.save(admin);
+        log.info("Admin user guaranteed with credentials: admin / admin123");
 
-        // Seed Team 1
-        if (userRepository.findByUsername("team1").isEmpty()) {
-            User team1User = new User();
-            team1User.setUsername("team1");
-            team1User.setPasswordHash(passwordEncoder.encode("password123"));
-            team1User.setRole(Role.TEAM);
-            team1User.setCreatedAt(Instant.now());
-            userRepository.save(team1User);
+        // Seed / Force Refresh Team 1 Account
+        User team1User = userRepository.findByUsername("team1").orElseGet(() -> {
+            User u = new User();
+            u.setUsername("team1");
+            u.setCreatedAt(Instant.now());
+            return u;
+        });
+        team1User.setPasswordHash(passwordEncoder.encode("password123"));
+        team1User.setRole(Role.TEAM);
+        userRepository.save(team1User);
+        log.info("Team 1 user guaranteed with credentials: team1 / password123");
 
-            Team team1 = new Team();
-            team1.setId("team1");
-            team1.setName("Team Alpha (Aethelgard)");
-            team1.setMembers(Arrays.asList("Alice", "Bob"));
-            team1.setPreferredLanguage("JAVA");
-            team1.setCurrentProblem(1);
-            team1.setYear(1);
-            team1.setContestId(contestId);
-            team1.setStatus(TeamStatus.ACTIVE);
-            teamRepository.save(team1);
-        }
+        Team team1 = teamRepository.findById("team1").orElseGet(() -> {
+            Team t = new Team();
+            t.setId("team1");
+            t.setName("Team Alpha (Aethelgard)");
+            t.setMembers(Arrays.asList("Alice", "Bob"));
+            t.setPreferredLanguage("JAVA");
+            t.setCurrentProblem(1);
+            t.setYear(1);
+            t.setStatus(TeamStatus.ACTIVE);
+            return t;
+        });
+        team1.setContestId(contestId);
+        teamRepository.save(team1);
     }
 
     private void addProblem(String contestId, String id, int year, int sequence, String title, String difficulty,
