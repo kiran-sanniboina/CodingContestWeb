@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+const BACKEND_INTERNAL_URL =
+  process.env.BACKEND_INTERNAL_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://backend:8080";
+
+async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   const targetPath = (path || []).join("/");
   const url = new URL(req.url);
   const queryString = url.search;
 
-  const envBackend = process.env.BACKEND_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL;
   const candidateHosts = [
-    ...(envBackend ? [envBackend.replace(/\/$/, "")] : []),
+    BACKEND_INTERNAL_URL.replace(/\/$/, ""),
     "http://backend:8080",
-    "http://contest_backend:8080",
-    "http://host.docker.internal:8080",
-    "http://127.0.0.1:8080",
     "http://localhost:8080",
+    "http://127.0.0.1:8080",
   ];
 
   const headers = new Headers();
   req.headers.forEach((value, key) => {
     const k = key.toLowerCase();
-    if (k !== "host" && k !== "connection" && k !== "content-length") {
+    if (k !== "host" && k !== "connection") {
       headers.set(key, value);
     }
   });
@@ -40,10 +42,7 @@ export async function proxyRequest(req: NextRequest, { params }: { params: Promi
 
       const responseHeaders = new Headers();
       response.headers.forEach((value, key) => {
-        const k = key.toLowerCase();
-        if (k !== "content-encoding" && k !== "transfer-encoding") {
-          responseHeaders.set(key, value);
-        }
+        responseHeaders.set(key, value);
       });
 
       const responseBody = await response.arrayBuffer();
@@ -52,17 +51,13 @@ export async function proxyRequest(req: NextRequest, { params }: { params: Promi
         statusText: response.statusText,
         headers: responseHeaders,
       });
-    } catch (err: any) {
+    } catch (err) {
       lastError = err;
     }
   }
 
-  console.error("All backend candidate connections failed for path: /api/" + targetPath, lastError);
   return NextResponse.json(
-    { 
-      error: "Backend service unreachable (502 Bad Gateway). Please check if contest_backend is running.", 
-      details: lastError?.message || String(lastError) 
-    },
+    { error: "Failed to connect to backend server", details: String(lastError) },
     { status: 502 }
   );
 }
@@ -73,5 +68,4 @@ export const PUT = proxyRequest;
 export const DELETE = proxyRequest;
 export const PATCH = proxyRequest;
 export const OPTIONS = proxyRequest;
-
 
